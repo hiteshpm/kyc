@@ -25,7 +25,7 @@
     Users []User `json:"users"`
 }
 
- // Define the car structure, with 4 properties.  Structure tags are used by encoding/json library
+ // Define the User structure, with 2 properties.  Structure tags are used by encoding/json library
  type User struct {
     Name   string `json:"name"`
     Age    int    `json:"Age"`	
@@ -33,16 +33,13 @@
 
 
 
- /*
-  * The Init method is called when the Smart Contract "fabcar" is instantiated by the blockchain network
-  * Best practice is to have any Ledger initialization in separate function -- see initLedger()
-  */
+
  func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
 	 return shim.Success(nil)
  }
  
  /*
-  * The Invoke method is called as a result of an application request to run the Smart Contract "fabcar"
+  * The Invoke method is called as a result of an application request to run the Smart Contract "kyc"
   * The calling application program has also specified the particular smart contract function to be called, with arguments
   */
  func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
