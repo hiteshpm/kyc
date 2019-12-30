@@ -1,66 +1,61 @@
+package main
 
- package main
+/* Imports
+ * 4 utility libraries for formatting, handling bytes, reading and writing JSON, and string manipulation
+ * 2 specific Hyperledger Fabric specific libraries for Smart Contracts
+ */
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strconv"
 
- /* Imports
-  * 4 utility libraries for formatting, handling bytes, reading and writing JSON, and string manipulation
-  * 2 specific Hyperledger Fabric specific libraries for Smart Contracts
-  */
- import (
-	 "bytes"
-	 "encoding/json"
-	 "fmt"
-	 "strconv"
-	 "io/ioutil"
-	 "os"
- 
-	 "github.com/hyperledger/fabric/core/chaincode/shim"
-	 sc "github.com/hyperledger/fabric/protos/peer"
- )
- 
- // Define the Smart Contract structure
- type SmartContract struct {
- }
- 
- type Users struct {
-    Users []User `json:"users"`
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	sc "github.com/hyperledger/fabric/protos/peer"
+)
+
+// Define the Smart Contract structure
+type SmartContract struct {
 }
 
- // Define the User structure, with 2 properties.  Structure tags are used by encoding/json library
- type User struct {
-    Name   string `json:"name"`
-    Age    int    `json:"Age"`	
+type Users struct {
+	Users []User `json:"users"`
 }
 
+// Define the User structure, with 2 properties.  Structure tags are used by encoding/json library
+type User struct {
+	Name string `json:"name"`
+	Age  int    `json:"Age"`
+}
 
+func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
+	return shim.Success(nil)
+}
 
+/*
+ * The Invoke method is called as a result of an application request to run the Smart Contract "kyc"
+ * The calling application program has also specified the particular smart contract function to be called, with arguments
+ */
+func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
 
- func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
-	 return shim.Success(nil)
- }
- 
- /*
-  * The Invoke method is called as a result of an application request to run the Smart Contract "kyc"
-  * The calling application program has also specified the particular smart contract function to be called, with arguments
-  */
- func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
- 
-	 // Retrieve the requested Smart Contract function and arguments
-	 function, args := APIstub.GetFunctionAndParameters()
-	 // Route to the appropriate handler function to interact with the ledger appropriately
-	 if function == "queryKyc" {
-		 return s.queryKyc(APIstub, args)
-	 }else if function == "bulkupload" {
-		return s.bulkupload(APIstub, args)
+	// Retrieve the requested Smart Contract function and arguments
+	function, args := APIstub.GetFunctionAndParameters()
+	// Route to the appropriate handler function to interact with the ledger appropriately
+	if function == "queryKyc" {
+		return s.queryKyc(APIstub, args)
+	} else if function == "bulkupload" {
+		return s.bulkupload(APIstub)
 	} else if function == "queryAllKyc" {
-	    return s.queryAllKyc(APIstub, args)	
+		return s.queryAllKyc(APIstub)
 	}
- 
-     return shim.Error("Invalid Smart Contract function name.")
- }
- 
+
+	return shim.Error("Invalid Smart Contract function name.")
+}
 
 func (s *SmartContract) queryKyc(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
- 
+
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
@@ -69,43 +64,40 @@ func (s *SmartContract) queryKyc(APIstub shim.ChaincodeStubInterface, args []str
 	return shim.Success(carAsBytes)
 }
 
- 
+func (s *SmartContract) bulkupload(APIstub shim.ChaincodeStubInterface) sc.Response {
 
- func (s *SmartContract) bulkupload(APIstub shim.ChaincodeStubInterface) sc.Response{
- 
 	// Open our jsonFile
-    jsonFile, err := os.Open("./util/utildata.json")
-    // if we os.Open returns an error then handle it
-    if err != nil {
-        fmt.Println(err)
-    }
+	jsonFile, err := os.Open("./util/utildata.json")
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		fmt.Println(err)
+	}
 
-    fmt.Println("Successfully Opened users.json")
-    // defer the closing of our jsonFile so that we can parse it later on
-    defer jsonFile.Close()
+	fmt.Println("Successfully Opened users.json")
+	// defer the closing of our jsonFile so that we can parse it later on
+	defer jsonFile.Close()
 
-    // read our opened xmlFile as a byte array.
-    byteValue, _ := ioutil.ReadAll(jsonFile)
+	// read our opened xmlFile as a byte array.
+	byteValue, _ := ioutil.ReadAll(jsonFile)
 
-    // we initialize our Users array
+	// we initialize our Users array
 	var users Users
-    json.Unmarshal(byteValue, &users)
+	json.Unmarshal(byteValue, &users)
 
-  
 	for i := 0; i < len(users.Users); i++ {
-        
-		 kycAsBytes, _ := json.Marshal(users.Users[i])
-		 APIstub.PutState("Customer"+strconv.Itoa(i), kycAsBytes)
-		 fmt.Println("Added", users.Users[i])
-		 
-	 }
- 
-	 return shim.Success(nil)
-	
+
+		kycAsBytes, _ := json.Marshal(users.Users[i])
+		APIstub.PutState("Customer"+strconv.Itoa(i), kycAsBytes)
+		fmt.Println("Added", users.Users[i])
+
+	}
+
+	return shim.Success(nil)
+
 }
 
- func (s *SmartContract) queryAllKyc(APIstub shim.ChaincodeStubInterface) sc.Response {
- 
+func (s *SmartContract) queryAllKyc(APIstub shim.ChaincodeStubInterface) sc.Response {
+
 	startKey := "Customer0"
 	endKey := "Customer999"
 
@@ -147,14 +139,12 @@ func (s *SmartContract) queryKyc(APIstub shim.ChaincodeStubInterface, args []str
 	return shim.Success(buffer.Bytes())
 }
 
+// The main function is only relevant in unit test mode. Only included here for completeness.
+func main() {
 
-
- // The main function is only relevant in unit test mode. Only included here for completeness.
- func main() {
- 
-	 // Create a new Smart Contract
-	 err := shim.Start(new(SmartContract))
-	 if err != nil {
-		 fmt.Printf("Error creating new Smart Contract: %s", err)
-	 }
- }
+	// Create a new Smart Contract
+	err := shim.Start(new(SmartContract))
+	if err != nil {
+		fmt.Printf("Error creating new Smart Contract: %s", err)
+	}
+}
