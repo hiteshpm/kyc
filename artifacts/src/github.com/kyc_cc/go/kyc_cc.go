@@ -49,6 +49,8 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 		return s.bulkupload(APIstub)
 	} else if function == "queryAllKyc" {
 		return s.queryAllKyc(APIstub)
+	} else if function == "requestLoan" {
+		return s.requestLoan(APIstub, args)
 	}
 
 	return shim.Error("Invalid Smart Contract function name.")
@@ -138,6 +140,25 @@ func (s *SmartContract) queryAllKyc(APIstub shim.ChaincodeStubInterface) sc.Resp
 
 	return shim.Success(buffer.Bytes())
 }
+func (s *SmartContract) requestLoan(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	customerid := args[0]
+
+	amount, err := strconv.Atoi(args[1])
+	if err != nil {
+		return shim.Error("Not able to parse Amount")
+	}
+
+	loan := Loan{Customerid: customerid, Amount: amount}
+	loanBytes, err := json.Marshal(loan)
+
+	APIstub.PutState(customerid, loanBytes)
+	fmt.Println("Loan Requested -> ", loan)
+
+	return shim.Success(nil)
+
+}
+
 
 // The main function is only relevant in unit test mode. Only included here for completeness.
 func main() {
