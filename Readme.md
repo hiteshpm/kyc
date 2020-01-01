@@ -30,5 +30,6 @@ With the application started in terminal 1, next, test the APIs by executing the
                   and upload data in bulk.
 
 2. QueryAllKyc:  IT will fetch all kyc data stored inside ledger
-3.  QueryKyc:   query single record.
+3. QueryKyc:   query single record.
+4. requestLoan: it will create new loan request.
 
